@@ -11,13 +11,10 @@ Usage
 -----
 ::
 
-    # Auto-discover all checkpoint folders under ./results/:
-    python scripts/print_benchmark_results.py
+    # Single checkpoint:
+    python scripts/print_benchmark_results.py results/pi0-tavis-head-gr1t2-headcam
 
-    # Specific checkpoint folder(s):
-    python scripts/print_benchmark_results.py results/pi0_tavis_head_gr1t2_headcam
-
-    # Side-by-side comparison of two runs:
+    # Side-by-side comparison of multiple runs:
     python scripts/print_benchmark_results.py results/run_A results/run_B
 
 The expected per-JSON structure (produced by eval_benchmark.py)::
@@ -104,26 +101,35 @@ def main():
     parser = argparse.ArgumentParser(
         description="Print ASCII success-rate tables from eval_benchmark.py JSON output"
     )
-    parser.add_argument("dirs", nargs="*", default=[],
-                        help="Checkpoint result directories (default: auto-discover under ./results/)")
-    parser.add_argument("--results-root", type=Path, default=Path("results"),
-                        help="Root dir scanned when no `dirs` are given (default: ./results)")
+    parser.add_argument("dirs", nargs="*",
+                        help="One or more checkpoint result directories (each contains the "
+                             "per-(task, eval-mode) JSONs written by eval_benchmark.py)")
     args = parser.parse_args()
 
-    if args.dirs:
-        ckpt_dirs = [Path(d) for d in args.dirs]
-    else:
-        if not args.results_root.is_dir():
-            print(f"No results/ directory found at {args.results_root}", file=sys.stderr)
-            sys.exit(1)
-        ckpt_dirs = sorted(
-            d for d in args.results_root.iterdir()
-            if d.is_dir() and not d.name.startswith(".")
+    if not args.dirs:
+        print(
+            "Usage:\n"
+            "    python scripts/print_benchmark_results.py <results_dir> [<results_dir> ...]\n"
+            "\n"
+            "Each <results_dir> is the directory eval_benchmark.py wrote into\n"
+            "(named after the checkpoint, e.g. results/pi0-tavis-head-gr1t2-headcam/).\n"
+            "\n"
+            "Example:\n"
+            "    python scripts/print_benchmark_results.py \\\n"
+            "        results/pi0-tavis-head-gr1t2-headcam\n"
+            "\n"
+            "    # Side-by-side comparison of multiple runs:\n"
+            "    python scripts/print_benchmark_results.py \\\n"
+            "        results/run_A results/run_B",
+            file=sys.stderr,
         )
-
-    if not ckpt_dirs:
-        print("No checkpoint directories found.", file=sys.stderr)
         sys.exit(1)
+
+    ckpt_dirs = [Path(d) for d in args.dirs]
+    for d in ckpt_dirs:
+        if not d.is_dir():
+            print(f"Not a directory: {d}", file=sys.stderr)
+            sys.exit(1)
 
     # Canonical task order (matches the suite definitions in tavis.benchmark.suites).
     # Unknown tasks are appended in the order they first appear.

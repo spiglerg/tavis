@@ -20,8 +20,9 @@ protocol is JSON, documented in `quest_app/README.md`.
 
 ## Software set-up
 
-1. **Install IsaacSim and IsaacLab** as documented in the top-level
-   `README.md`. Then `pip install -e ".[train]"` from the repo root.
+1. **Install IsaacSim, IsaacLab, IsaacLab-Arena, and TAVIS** as documented
+   in the top-level `README.md`. (Data collection does not need the
+   `[train]` extra; the core install is enough.)
 2. **Pre-built APK.** The `quest_teleop.apk` is published as a
    release artifact. Download and install:
 

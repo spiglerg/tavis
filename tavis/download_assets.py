@@ -73,7 +73,7 @@ def download_assets(force: bool = False) -> bool:
         from huggingface_hub import snapshot_download
     except ImportError:
         print("huggingface_hub is required to download assets. Install with:")
-        print("    pip install huggingface_hub")
+        print("    uv pip install huggingface_hub   # or pip install huggingface_hub")
         return False
 
     print(

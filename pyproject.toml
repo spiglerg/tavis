@@ -46,6 +46,7 @@ dependencies = [
     "opencv-python>=4.9.0",
     "imageio[ffmpeg]==2.37.2",
     "pandas",                        # train_policy.py --task filter
+    "huggingface_hub>=0.24.0",       # tavis.download_assets.snapshot_download
 ]
 
 [project.optional-dependencies]

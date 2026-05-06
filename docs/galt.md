@@ -61,11 +61,11 @@ override `ActionLayout` with that robot's action indices:
 from tavis.eval.galt import compute_galt, ActionLayout, GaltParams
 
 layout = ActionLayout(
-    left_ee_xyz=(2, 3, 4),
-    right_ee_xyz=(11, 12, 13),
-    neck=(0, 1, 18),
-    left_gripper=10,
-    right_gripper=19,
+    left_ee_xyz=(0, 1, 2),
+    right_ee_xyz=(7, 8, 9),
+    neck=(14, 15, 16),
+    left_gripper=17,
+    right_gripper=18,
 )
 
 result = compute_galt(actions, fps=20.0, layout=layout)

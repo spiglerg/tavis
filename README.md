@@ -3,13 +3,12 @@
 **T**orso **A**ctive **V**ision **I**mitation-learning **S**uite — a
 benchmark for egocentric active-vision imitation learning and anticipatory 
 gaze on humanoid torsos. TAVIS provides eight simulated manipulation 
-tasks across two robots (Fourier GR1T2 and Pollen Reachy 2), 800+ VR-teleoperated
-demonstrations per (suite, robot), pretrained π₀ baselines, and a
+tasks across two robots (Fourier GR1T2 and Pollen Reachy 2), 2200 VR-teleoperated
+demonstrations in total, pretrained π₀ baselines, and a
 proprioceptive metric — **GALT (Gaze–Action Lead Time)** — for
 quantifying anticipatory gaze in the resulting policies.
 
-> *Paper: under review at NeurIPS 2026, Evaluations &
-> Datasets Track.*
+> *Paper: under review*.
 
 ## What TAVIS evaluates
 
@@ -17,13 +16,14 @@ TAVIS is designed to support evaluative claims about:
 
 * **Active vision in IL** — whether and how head-mounted egocentric
   cameras improve task performance over fixed-camera baselines, on
-  tasks that genuinely require gaze.
+  tasks that can benefit from gaze behavior.
 * **Anticipatory gaze** — whether a policy reproduces the *temporal*
   structure of head-before-hand seen in human demonstrations
   (measured by GALT, in seconds), not just the spatial endpoints.
-* **Cross-embodiment generalisation** — whether a policy trained on
-  one humanoid torso transfers to another with the same canonical
-  19-D action layout.
+* **Shared task/action design across embodiments** — the same tasks run
+  on both humanoid torsos with a canonical 19-D action layout. The
+  released results treat the robots as separate benchmark axes rather
+  than claiming zero-shot policy transfer between them.
 
 Each (robot × task × eval-mode) cell is evaluated over 96 stochastic
 episodes; success rates are reported with Wilson 95 % confidence
@@ -77,8 +77,7 @@ uv pip install -e ".[train]"     # adds the patched transformers needed for π�
 > (use [LeRobot's web visualiser](https://huggingface.co/spaces/lerobot/visualize_dataset)
 > for dataset inspection), so `pyproject.toml` tells uv to skip
 > it via `[tool.uv] override-dependencies`. Plain `pip install -e .`
-> doesn't honour that section and will fail to resolve. uv installs
-> in seconds and is otherwise a drop-in for pip.
+> ignores uv's override-dependencies and **will not install correctly**.
 
 ## Quick start: reproduction recipes
 
@@ -113,17 +112,17 @@ Pretrained π₀ checkpoints available on Hugging Face:
 
 | Repo                                              | Robot   | Suite        | Camera     |
 |---------------------------------------------------|---------|--------------|------------|
-| `tavis-benchmark/pi0-tavis-head-gr1t2-headcam`    | GR1T2   | TAVIS-HEAD   | head-mount |
+| `tavis-benchmark/pi0-tavis-head-gr1t2-headcam`    | GR1T2   | TAVIS-HEAD   | head       |
 | `tavis-benchmark/pi0-tavis-head-gr1t2-fixedcam`   | GR1T2   | TAVIS-HEAD   | fixed      |
-| `tavis-benchmark/pi0-tavis-head-reachy2-headcam`  | Reachy2 | TAVIS-HEAD   | head-mount |
+| `tavis-benchmark/pi0-tavis-head-reachy2-headcam`  | Reachy2 | TAVIS-HEAD   | head       |
 | `tavis-benchmark/pi0-tavis-head-reachy2-fixedcam` | Reachy2 | TAVIS-HEAD   | fixed      |
-| `tavis-benchmark/pi0-tavis-hands-gr1t2`           | GR1T2   | TAVIS-HANDS  | head-mount |
-| `tavis-benchmark/pi0-tavis-hands-reachy2`         | Reachy2 | TAVIS-HANDS  | head-mount |
+| `tavis-benchmark/pi0-tavis-hands-gr1t2`           | GR1T2   | TAVIS-HANDS  | head       |
+| `tavis-benchmark/pi0-tavis-hands-reachy2`         | Reachy2 | TAVIS-HANDS  | head       |
 
 ### B) Train and evaluate a single-task diffusion policy from scratch
 
-Lightweight, fully reproducible end-to-end on a single GPU overnight
-(~12 h on a 4090). Reproduces one task cell of the paper.
+Lightweight, end-to-end runnable on a single GPU overnight (~12 h on a 4090).
+Reproduces one task cell of the paper.
 
 The released TAVIS datasets are *multi-task suites* (one per
 robot × suite) with a recorded `task` field per episode. The training
@@ -286,4 +285,3 @@ robot models are sourced from the upstream Fourier GR1T2 and Pollen
 Reachy 2 USD distributions; the YCB objects come from the YCB
 project. The Meta Quest hardware and SDK are used for VR
 teleoperation.
-
