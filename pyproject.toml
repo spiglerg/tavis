@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tavis"
+dynamic = ["version"]
+description = "TAVIS: A Benchmark for Egocentric Active Vision and Anticipatory Gaze in Imitation Learning"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "TAVIS Benchmark", email = "tavis.benchmark@gmail.com"}
+]
+keywords = [
+    "robotics",
+    "imitation learning",
+    "active vision",
+    "humanoid",
+    "isaaclab",
+    "benchmark",
+    "evaluation",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# isaacsim, isaaclab, and isaaclab-arena must be installed separately (not on PyPI).
+#
+# IMPORTANT — install with `uv pip install -e .` (not plain `pip install -e .`).
+# lerobot 0.4.3 transitively requires `rerun-sdk>=0.24,<0.27`, every version of
+# which requires numpy>=2. IsaacLab's stack (pinocchio, used by `dex_retargeting`
+# in the OpenXR retargeters) is compiled against numpy<2 and crashes on numpy 2.
+# tavis itself does not import rerun-sdk (the LeRobot web visualiser at
+# https://huggingface.co/spaces/lerobot/visualize_dataset works equally well),
+# so the [tool.uv] section below tells uv to skip it entirely. Pip ignores that
+# section and will fail to resolve.
+dependencies = [
+    "lerobot==0.4.3",
+    "numpy<2,>=1.24",                # IsaacLab's pinocchio requires numpy<2
+    "scipy>=1.10.0",
+    "opencv-python>=4.9.0",
+    "imageio[ffmpeg]==2.37.2",
+    "pandas",                        # train_policy.py --task filter
+]
+
+[project.optional-dependencies]
+train = [
+    # pi0 requires a patched transformers (conflicts with standard transformers>=4.57)
+    "transformers @ git+https://github.com/huggingface/transformers.git@fix/lerobot_openpi",
+]
+dev = [
+    "pytest",
+    "black",
+    "ruff",
+]
+
+[tool.uv]
+# Drop rerun-sdk from the resolution graph entirely (lerobot's transitive viz
+# dependency; conflicts with IsaacLab's numpy<2 — see the dependencies comment
+# above). The marker `sys_platform == 'never'` is always false, so rerun-sdk is
+# never installed regardless of which package requested it.
+override-dependencies = [
+    "rerun-sdk ; sys_platform == 'never'",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "tavis._version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tavis*"]
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "W"]
+ignore = ["E501"]
