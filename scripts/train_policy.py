@@ -276,8 +276,20 @@ def main():
     filtered_episodes = None
     if args.task:
         import pandas as pd
-        from tavis.tasks import TASK_MAP
-        target_class = TASK_MAP[args.task].__name__ if args.task in TASK_MAP else args.task
+        # Inlined task_key -> recorded class name map. Kept here (not imported
+        # from tavis.tasks) so training does not pull in IsaacLab/omni — keep
+        # in sync with tavis/tasks/__init__.py:TASK_MAP.
+        _TASK_CLASS_NAMES = {
+            "clutter_pick_lift": "ClutterPickLiftTask",
+            "clutter_pick_cube": "ClutterPickCubeTask",
+            "conditional_pick": "ConditionalPickTask",
+            "wait_then_act": "WaitThenActTask",
+            "multi_shelf_scan": "MultiShelfScanTask",
+            "peeking_box": "PeekingBoxTask",
+            "occluded_reach": "OccludedReachTask",
+            "blocked_clutter_pick_cube": "BlockedClutterPickCubeTask",
+        }
+        target_class = _TASK_CLASS_NAMES.get(args.task, args.task)
         ep_files = sorted(Path(root).glob("meta/episodes/**/*.parquet"))
         if not ep_files:
             parser.error(f"--task requires meta/episodes/*.parquet under {root}")
