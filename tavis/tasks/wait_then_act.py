@@ -19,6 +19,8 @@ from isaaclab.assets import RigidObjectCfg
 from isaaclab.envs import ManagerBasedRLEnv
 from isaaclab.envs.common import ViewerCfg
 from isaaclab.managers import EventTermCfg as EventTerm
+
+from tavis.mdp import reset_scene_to_default_safe
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.utils import configclass
 
@@ -208,7 +210,7 @@ class WaitThenActTerminationsCfg:
 
 @configclass
 class WaitThenActEventCfg:
-    reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
+    reset_all = EventTerm(func=reset_scene_to_default_safe, mode="reset")
     sample_trial = EventTerm(func=_sample_trial, mode="reset", params={})
 
 

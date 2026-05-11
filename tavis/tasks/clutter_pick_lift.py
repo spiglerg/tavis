@@ -15,6 +15,8 @@ import torch
 from isaaclab.envs import ManagerBasedRLEnv
 from isaaclab.envs.common import ViewerCfg
 from isaaclab.managers import EventTermCfg as EventTerm
+
+from tavis.mdp import reset_scene_to_default_safe
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.utils import configclass
@@ -170,7 +172,7 @@ class ClutterPickLiftTerminationsCfg:
 
 @configclass
 class ClutterPickLiftEventCfg:
-    reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
+    reset_all = EventTerm(func=reset_scene_to_default_safe, mode="reset")
     sample_target = EventTerm(func=_sample_target, mode="reset", params={})  # task injected
     randomize_object_positions = EventTerm(
         func=franka_stack_events.randomize_object_pose,
