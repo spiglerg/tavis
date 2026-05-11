@@ -1,5 +1,9 @@
 # TAVIS
 
+<p align="center">
+  <img src="docs/images/figure1.png" alt="TAVIS overview" width="80%" />
+</p>
+
 **T**orso **A**ctive **V**ision **I**mitation-learning **S**uite — a
 benchmark for egocentric active-vision imitation learning and anticipatory 
 gaze on humanoid torsos. TAVIS provides eight simulated manipulation 
@@ -50,34 +54,39 @@ intervals. See `docs/ood_modes.md` for the eval-mode taxonomy.
 
 ## Installation
 
+The repository ships an installer script that bootstraps the full
+pinned stack (see install.sh for exact versions) into a fresh
+`tavis` conda env on Python 3.11:
+
 ```bash
-# 1. Install IsaacSim (4.5+) following NVIDIA's instructions:
-#    https://docs.isaacsim.omniverse.nvidia.com/
-
-# 2. Install IsaacLab from source:
-git clone https://github.com/isaac-sim/IsaacLab.git
-cd IsaacLab && ./isaaclab.sh --install && cd ..
-
-# 3. Install IsaacLab-Arena (the embodiment / task abstraction layer):
-#    follow the upstream install instructions for that package.
-#    ( https://github.com/isaac-sim/IsaacLab-Arena )
-
-# 4. Install TAVIS via uv (one-time install of uv first):
 git clone <this-repo-url>
 cd tavis
-pip install uv
-uv pip install -e .              # core (eval, teleop)
-uv pip install -e ".[train]"     # adds the patched transformers needed for π₀
+bash install.sh
+conda activate tavis
 ```
 
-> **Why uv?** lerobot 0.4.3 transitively requires `rerun-sdk>=0.24,<0.27`,
-> every version of which depends on `numpy>=2`. IsaacLab's stack
-> (pinocchio, via `dex_retargeting`) is compiled against `numpy<2`
-> and crashes on `numpy 2`. tavis itself doesn't import rerun-sdk
-> (use [LeRobot's web visualiser](https://huggingface.co/spaces/lerobot/visualize_dataset)
-> for dataset inspection), so `pyproject.toml` tells uv to skip
-> it via `[tool.uv] override-dependencies`. Plain `pip install -e .`
-> ignores uv's override-dependencies and **will not install correctly**.
+Override defaults via env vars:
+
+| Variable             | Default   | Notes                                            |
+|----------------------|-----------|--------------------------------------------------|
+| `TAVIS_ENV_NAME`     | `tavis`   | Conda env name.                                  |
+| `TAVIS_INSTALL_DIR`  | `$HOME`   | Where IsaacLab and IsaacLab-Arena are cloned.    |
+| `TAVIS_TORCH_CUDA`   | `cu128`   | Torch wheel; `cu130` also valid.                 |
+
+Requirements: `conda`, `git`, and an NVIDIA GPU with matching CUDA drivers.
+The script aborts if the conda env or target clone directories already
+exist — remove them or override the env vars to retry.
+
+> **Paper-version note.** Paper results were originally produced with
+> Isaac Sim 4.5 / Python 3.10 / IsaacLab v2.1.1. The current installer
+> targets Isaac Sim 5.1 — same code path, with fixes applied for
+> upstream API changes.
+
+> **Note.** Plain `pip install -e .` will not install correctly:
+> `install.sh` uses `uv` to apply dependency overrides defined in
+> `pyproject.toml` (e.g. excluding `rerun-sdk` to keep `numpy<2`
+> for IsaacLab's pinocchio). See `install.sh` for the full pinned
+> stack and override mechanism.
 
 ## Quick start: reproduction recipes
 
@@ -250,6 +259,7 @@ tavis/
 │   └── print_benchmark_results.py   # Aggregate eval JSONs into ASCII tables (Wilson CIs)
 ├── quest_app/                       # Meta Quest Unity project
 ├── docs/                            # Per-topic documentation
+├── install.sh                       # One-shot env + pinned-deps installer
 ├── pyproject.toml
 └── LICENSE
 ```
