@@ -276,10 +276,16 @@ tavis/
 
 ## Citation
 
-[COMING SOON]
+If you use TAVIS, please cite:
 
-The BibTeX entry will be updated to point at the published version
-once review concludes.
+```bibtex
+@article{spigler2026tavis,
+  title={TAVIS: A Benchmark for Egocentric Active Vision and Anticipatory Gaze in Imitation Learning},
+  author={Spigler, Giacomo},
+  journal={arXiv preprint arXiv:2605.07943},
+  year={2026}
+}
+```
 
 ## Contact
 
