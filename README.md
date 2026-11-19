@@ -82,6 +82,12 @@ exist — remove them or override the env vars to retry.
 > targets Isaac Sim 5.1 — same code path, with fixes applied for
 > upstream API changes.
 
+> **v1.1.0: wait-then-act scoring.** In v1.0.0, lifting the object while the
+> light was still red and holding it until green counted as a success. From
+> v1.1.0, lifting the object off the table before green fails the episode, and
+> each episode logs the switch time, the first-lift time and an early-lift flag
+> in its `extra` field. The paper's wait-then-act results use v1.1.0.
+
 > **Note.** Plain `pip install -e .` will not install correctly:
 > `install.sh` uses `uv` to apply dependency overrides defined in
 > `pyproject.toml` (e.g. excluding `rerun-sdk` to keep `numpy<2`

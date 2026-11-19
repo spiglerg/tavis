@@ -2,12 +2,20 @@
 WaitThenAct — TAVIS-HEAD Task 2.
 
 A sphere "lightbulb" (~3 cm radius) is placed on the table.  It starts
-**red** and turns **green** after a random delay (2–6 s by default).
+**red** and turns **green** after a random delay (2–5 s in ``id``, 2–8 s in
+``ood_spatial``).
 One YCB object from the TAVIS-HEAD set is placed in the centre area.
 
 The robot must: (1) look at the light and monitor it, (2) when it turns
 green, look at the object, (3) grasp and lift it.  Tests gaze for
 *temporal monitoring*.
+
+Success: the light is green AND the target is lifted (z > 1.2 m) and nearly
+still (|v| < 1 m/s), AND the target was not lifted off the table while the
+light was red (v1.1.0; v1.0.0 did not fail early lifts, so lifting on red and
+holding until green counted as a success).  Per episode, the task also logs the
+switch time, the first-lift time and the early-lift flag (``pop_episode_log``),
+which the evaluator stores in each episode's ``extra``.
 """
 
 import math
@@ -69,6 +77,13 @@ VARIANTS: dict[str, dict] = {
 }
 
 
+# Target centre height (m) above which the object counts as lifted off the
+# table for the early-lift check: 15 cm above the table surface, i.e. ~10 cm
+# above a resting object and 5 cm below the success height.  Objects are
+# dropped from TABLE_HEIGHT + 0.1 at reset, so the drop cannot trigger it.
+LIFT_DETECT_Z = TABLE_HEIGHT + 0.15
+
+
 # ---------------------------------------------------------------------------
 # Event / termination functions
 # ---------------------------------------------------------------------------
@@ -91,11 +106,24 @@ def _sample_trial(
         target = random.choice(TAVIS_HEAD_OBJECT_NAMES)
         delay_s = random.uniform(*v["delay_range_s"])
 
+        # Stash the finished trial before overwriting it: IsaacLab auto-resets
+        # inside env.step(), before the evaluator sees the termination.
+        prev = task._env_state.get(eid)
+        if prev is not None:
+            task._episode_log[eid] = {
+                "wta_green_s": prev["green_step"] * env.step_dt,
+                "wta_first_lift_s": (None if prev["first_lift_step"] is None
+                                     else prev["first_lift_step"] * env.step_dt),
+                "wta_lifted_before_green": prev["lifted_before_green"],
+            }
+
         task._env_state[eid] = {
             "target_object": target,
             "prompt": PROMPT,
             "light_is_green": False,
             "green_step": int(delay_s / env.step_dt),
+            "first_lift_step": None,
+            "lifted_before_green": False,
         }
 
         # Place the selected object
@@ -143,7 +171,8 @@ def _check_and_update(
     """Termination: flip light colour at green_step, then check lift success.
 
     The light transitions from red to green once the sampled delay elapses.
-    Success requires the light to be green AND the object to be lifted.
+    Success requires the light to be green AND the object to be lifted, and
+    fails for good if the object was lifted off the table while still red.
     Per-env state ensures parallel envs don't interfere with each other.
     """
     task = env.unwrapped.task
@@ -159,11 +188,18 @@ def _check_and_update(
             state["light_is_green"] = True
             change_prim_color(env, f"/World/envs/env_{eid}/signal_light", (0.0, 1.0, 0.0))
 
-        if not state["light_is_green"]:
-            continue
-
         obj = env.scene[state["target_object"]]
         z = obj.data.root_pos_w[eid, 2] - env.scene.env_origins[eid, 2]
+
+        # Record the first lift off the table; on red it fails the episode.
+        if state["first_lift_step"] is None and z > LIFT_DETECT_Z:
+            state["first_lift_step"] = int(env.episode_length_buf[eid])
+            if not state["light_is_green"]:
+                state["lifted_before_green"] = True
+
+        if not state["light_is_green"] or state["lifted_before_green"]:
+            continue
+
         vel = torch.norm(obj.data.root_lin_vel_w[eid])
         result[eid] = (z > min_height) and (vel < max_velocity)
 
@@ -252,6 +288,12 @@ class WaitThenActTask(TaskBase):
         self.light_is_green: bool = False
         self.green_step: int = 0
         self._env_state: dict[int, dict] = {}
+        self._episode_log: dict[int, dict] = {}
+
+    def pop_episode_log(self, env_id: int) -> dict:
+        """Per-episode record of the trial that just ended in ``env_id``
+        (switch time, first-lift time, early-lift flag); empty if none."""
+        return self._episode_log.pop(env_id, {})
 
     def get_prompt(self, env_id: int | None = None) -> str:
         if env_id is not None and env_id in self._env_state:

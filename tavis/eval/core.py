@@ -289,6 +289,10 @@ def run_eval_episodes(env, policy_bundle, camera_mode, embodiment, n_episodes,
         action_buffers = [[] for _ in range(num_envs)]
         env_galt = [None] * num_envs
         galt_params = GaltParams()
+        # Task-specific per-episode records (e.g. wait-then-act switch and
+        # first-lift times), read at termination before the env is reused.
+        env_task_log = [{} for _ in range(num_envs)]
+        task_obj = getattr(env.unwrapped, "task", None)
 
         round_start = time.time()
         timestep = 0
@@ -337,6 +341,8 @@ def run_eval_episodes(env, policy_bundle, camera_mode, embodiment, n_episodes,
                     env_done[env_idx] = True
                     env_success[env_idx] = bool(terminated[env_idx].item())
                     env_timesteps[env_idx] = timestep
+                    if hasattr(task_obj, "pop_episode_log"):
+                        env_task_log[env_idx] = task_obj.pop_episode_log(env_idx)
                     # GALT on successful headcam episodes only.
                     if camera_mode == "headcam" and env_success[env_idx] \
                             and action_buffers[env_idx]:
@@ -356,7 +362,7 @@ def run_eval_episodes(env, policy_bundle, camera_mode, embodiment, n_episodes,
         for env_idx in range(num_envs):
             success = bool(env_success[env_idx].item())
             steps = int(env_timesteps[env_idx].item())
-            extra = {}
+            extra = dict(env_task_log[env_idx])
             gr = env_galt[env_idx]
             if gr is not None:
                 extra["galt_s"] = gr.galt_s
